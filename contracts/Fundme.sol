@@ -3,13 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
+import "hardhat/console.sol";
 
-//get fund from user
-//withdraw funds
-///set minimum funding
+error FundMe__NotOwner();
 
-error NotOwner();
-
+/// @title A contract for crowd funding
 contract FundMe {
     using PriceConverter for uint256;
     uint256 public constant MINIMUM_USD = 50 * 1e18;
@@ -21,16 +19,39 @@ contract FundMe {
 
     AggregatorV3Interface public priceFeed;
 
+    modifier onlyOwner() {
+        //require(msg.sender == i_owner, "sender is Not the owner");
+        if (msg.sender == i_owner) {
+            revert FundMe__NotOwner();
+        }
+        _;
+    }
+
     constructor(address priceFeedAddress) {
         i_owner = msg.sender;
         priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
+    }
+
     function fund() public payable {
         //min fund amount
         //how do we send ETH to this contract
+        //const convRate = getConversionRate(msg.value, priceFeed);
+
+        console.log("the sent amount is ", msg.value);
+        console.log(
+            "the conversion amount is ",
+            msg.value.getConversionRate(priceFeed)
+        );
         require(
-            msg.value.getConversionRate(priceFeed) > MINIMUM_USD,
+            msg.value.getConversionRate(priceFeed) >= MINIMUM_USD,
             "Didnt send enough"
         );
         //msg.value.getConversionRate();
@@ -70,21 +91,5 @@ contract FundMe {
             value: address(this).balance
         }("");
         require(callSucess, "Call Failed");
-    }
-
-    modifier onlyOwner() {
-        //require(msg.sender == i_owner, "sender is Not the owner");
-        if (msg.sender == i_owner) {
-            revert NotOwner();
-        }
-        _;
-    }
-
-    receive() external payable {
-        fund();
-    }
-
-    fallback() external payable {
-        fund();
     }
 }
