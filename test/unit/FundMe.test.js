@@ -6,7 +6,7 @@ const hre = require("hardhat");
 describe("FundeMe", async function () {
   let fundMe;
   let priceFeedAddressLocal = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
-  const sendValue = ethers.parseEther("1");
+  const sendValue = 100000000000000000;
 
   beforeEach(async function () {
     fundMe = await hre.ethers.deployContract("FundMe", [
@@ -16,7 +16,7 @@ describe("FundeMe", async function () {
 
   describe("constructor", function () {
     it("check the price feed address", async function () {
-      const priceFeedAddress = await fundMe.priceFeed();
+      const priceFeedAddress = await fundMe.s_priceFeed();
 
       assert.equal(priceFeedAddress, priceFeedAddressLocal);
     });
@@ -35,17 +35,17 @@ describe("FundeMe", async function () {
       console.log(sendValue);
       await fundMe.fund({ value: sendValue });
 
-      const response = await fundMe.priceFeed();
+      const response = await fundMe.s_priceFeed();
 
       assert.equal(response.toString(), sendValue.toString());
     });
 
-    // it("Adds funder to array of funders", async () => {
-    //   await fundMe.fund({ value: sendValue });
+    it("Adds funder to array of funders", async () => {
+      await fundMe.fund({ value: sendValue });
 
-    //   const response = await fundMe.funders[0];
+      const response = await fundMe.s_funders[0];
 
-    //   assert.equal(response, priceFeedAddressLocal);
-    // });
+      assert.equal(response, "0x6e4C07B5794191193a2eb2E09773f6A991a30CaC");
+    });
   });
 });
